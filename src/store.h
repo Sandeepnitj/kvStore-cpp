@@ -4,17 +4,15 @@
 #include <string>
 #include <unordered_map>
 
-using namespace std;
-
 class Store
 {
 private:
-    unordered_map<string, string> db;
+    std::unordered_map<std::string, std::string> db;
 
 public:
-    void set(const string &key, const string &value);
-    string get(const string &key);
-    void del(const string &key);  
+    void set(const std::string &key, const std::string &value);
+    std::string get(const std::string &key);
+    void del(const std::string &key);
 };
 
 #endif

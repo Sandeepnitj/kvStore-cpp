@@ -1,5 +1,7 @@
 #include "store.h"
 
+using namespace std;
+
 void Store::set(const string &key, const string &value)
 {
     db[key] = value;

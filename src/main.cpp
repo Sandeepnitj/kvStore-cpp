@@ -1,23 +1,47 @@
 #include <iostream>
+#include <vector>
 #include "store.h"
+#include "parser.h"
 
 using namespace std;
 
 int main()
 {
     Store store;
-    string command, key, value;
+    string line;
 
-    cout << "Simple Key-Value Store Started. Type commands: " << endl;
+    cout << "KV Store Started (Type EXIT to quit)" << endl;
 
     while(true)
     {
         cout << "> ";
-        cin >> command;
+        getline(cin, line);
+
+        if(line == "EXIT")  break;
+
+        vector<string> tokens = Parser::parse(line);
+
+        if(tokens.empty())  continue;
+
+        string command = tokens[0];
 
         if(command == "SET")
         {
-            cin >> key >> value;
+            if(tokens.size() < 3)
+            {
+                cout << "Usage: SET key value" << endl;
+                continue;
+            }
+
+            string key = tokens[1];
+
+            // Join remaining tokens as value
+            string value = tokens[2];
+
+            for(int i = 3; i < tokens.size(); i++)
+            {
+                value += " " + tokens[i];
+            }
 
             store.set(key, value);
 
@@ -25,21 +49,25 @@ int main()
         }
         else if(command == "GET")
         {
-            cin >> key;
+            if (tokens.size() != 2)
+            {
+                cout << "Usage: GET key" << endl;
+                continue;
+            }
 
-            cout << store.get(key) << endl;
+            cout << store.get(tokens[1]) << endl;
         }
         else if(command == "DEL")
         {
-            cin >> key;
+            if(tokens.size() != 2)
+            {
+                cout << "Usage: DEL key" << endl;
+                continue;
+            }
 
-            store.del(key);
+            store.del(tokens[1]);
 
             cout << "Deleted" << endl;
-        }
-        else if(command == "EXIT")
-        {
-            break;
         }
         else
         {
