@@ -1,7 +1,9 @@
 #include <iostream>
-#include <vector>
+#include <unordered_map>
+
 #include "store.h"
 #include "parser.h"
+#include "command.h"
 
 using namespace std;
 
@@ -10,7 +12,14 @@ int main()
     Store store;
     string line;
 
-    cout << "KV Store Started (Type EXIT to quit)" << endl;
+    // Command registry
+    unordered_map<string, Command*> commands;
+    commands["SET"] = new SetCommand();
+    commands["GET"] = new GetCommand();
+    commands["DEL"] = new DelCommand();
+    commands["HELP"] = new HelpCommand();
+
+    cout << "KV Store Started. Type HELP for commands." << endl;
 
     while(true)
     {
@@ -21,57 +30,19 @@ int main()
 
         vector<string> tokens = Parser::parse(line);
 
+        // Continue if empty
         if(tokens.empty())  continue;
 
-        string command = tokens[0];
+        string cmd = tokens[0];
 
-        if(command == "SET")
+        // Execute Command
+        if(commands.find(cmd) != commands.end())
         {
-            if(tokens.size() < 3)
-            {
-                cout << "Usage: SET key value" << endl;
-                continue;
-            }
-
-            string key = tokens[1];
-
-            // Join remaining tokens as value
-            string value = tokens[2];
-
-            for(int i = 3; i < tokens.size(); i++)
-            {
-                value += " " + tokens[i];
-            }
-
-            store.set(key, value);
-
-            cout << "OK" << endl;
-        }
-        else if(command == "GET")
-        {
-            if (tokens.size() != 2)
-            {
-                cout << "Usage: GET key" << endl;
-                continue;
-            }
-
-            cout << store.get(tokens[1]) << endl;
-        }
-        else if(command == "DEL")
-        {
-            if(tokens.size() != 2)
-            {
-                cout << "Usage: DEL key" << endl;
-                continue;
-            }
-
-            store.del(tokens[1]);
-
-            cout << "Deleted" << endl;
+            commands[cmd]->execute(store, tokens);
         }
         else
         {
-            cout << "Invalid Command" << endl;
+            cout << "Invalid command" << endl;
         }
     }
 
