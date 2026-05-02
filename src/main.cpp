@@ -5,6 +5,7 @@
 #include "store.h"
 #include "parser.h"
 #include "command.h"
+#include "response.h"
 
 using namespace std;
 
@@ -45,7 +46,7 @@ int main()
         }
         else
         {
-            cout << "Invalid command" << endl;
+            cout << Response::error("Invalid command") << endl;
         }
     }
 

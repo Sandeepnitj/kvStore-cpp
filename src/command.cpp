@@ -1,4 +1,6 @@
 #include "command.h"
+#include "response.h"
+
 #include <iostream>
 
 using namespace std;
@@ -8,7 +10,7 @@ void SetCommand::execute(Store &store, const vector<string> &args)
 {
     if(args.size() < 3)
     {
-        cout << "Error: SET requires key and value" << endl;
+        cout << Response::error("SET requires key and value") << endl;
         return;
     }
 
@@ -24,7 +26,7 @@ void SetCommand::execute(Store &store, const vector<string> &args)
 
     store.set(key, value);
 
-    cout << "OK" << endl;
+    cout << Response::ok() << endl;
 }
 
 // GET
@@ -32,11 +34,11 @@ void GetCommand::execute(Store &store, const vector<string> &args)
 {
     if(args.size() != 2)
     {
-        cout << "Error: GET requires 1 argument (key)" << endl;
+        cout << Response::error("Error: GET requires 1 argument (key)") << endl;
         return;
     }
 
-    cout << store.get(args[1]) << endl;
+    cout << Response::value(store.get(args[1])) << endl;
 }
 
 // DEL
@@ -44,13 +46,13 @@ void DelCommand::execute(Store &store, const vector<string> &args)
 {
     if(args.size() != 2)
     {
-        cout << "Error: DEL requires 1 argument (key)" << endl;
+        cout << Response::error("Error: DEL requires 1 argument (key)") << endl;
         return;
     }
 
     store.del(args[1]);
 
-    cout << "Deleted" << endl;
+    cout << Response::ok() << endl;
 }
 
 // HELP

@@ -10,6 +10,6 @@ A simple in-memory key-value store supporting:
 
 ## Run
 
-g++ -std=c++17 src/main.cpp src/store.cpp src/parser.cpp src/command.cpp -o kvStore
+g++ -std=c++17 src/command.cpp src/main.cpp src/parser.cpp src/response.cpp src/store.cpp -o kvStore
 
-./kvstore
+./kvStore
