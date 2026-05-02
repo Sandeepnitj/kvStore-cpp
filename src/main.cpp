@@ -46,5 +46,10 @@ int main()
         }
     }
 
+    delete commands["SET"];
+    delete commands["GET"];
+    delete commands["DEL"];
+    delete commands["HELP"];
+
     return 0;
 }
