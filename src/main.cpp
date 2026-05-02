@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 #include <unordered_map>
 
 #include "store.h"
@@ -13,11 +14,13 @@ int main()
     string line;
 
     // Command registry
-    unordered_map<string, Command*> commands;
-    commands["SET"] = new SetCommand();
-    commands["GET"] = new GetCommand();
-    commands["DEL"] = new DelCommand();
-    commands["HELP"] = new HelpCommand();
+    unordered_map<string, unique_ptr<Command>> commands;
+
+    // Using Smart pointers to initialize commands objects
+    commands["SET"] = make_unique<SetCommand>();
+    commands["GET"] = make_unique<GetCommand>();
+    commands["DEL"] = make_unique<DelCommand>();
+    commands["HELP"] = make_unique<HelpCommand>();
 
     cout << "KV Store Started. Type HELP for commands." << endl;
 
@@ -45,11 +48,6 @@ int main()
             cout << "Invalid command" << endl;
         }
     }
-
-    delete commands["SET"];
-    delete commands["GET"];
-    delete commands["DEL"];
-    delete commands["HELP"];
 
     return 0;
 }
