@@ -15,16 +15,31 @@ void SetCommand::execute(Store &store, const vector<string> &args)
     }
 
     string key = args[1];
-
-    // Join remaining tokens as value
     string value = args[2];
 
-    for(int i = 3; i < args.size(); i++)
+    // Join remaining tokens as value
+    int i = 3;
+    while (i < args.size() && args[i] != "EX")
     {
         value += " " + args[i];
+        i++;
     }
 
-    store.set(key, value);
+    long long ttl = -1;
+
+    // Check for EX
+    if(i < args.size() && args[i] == "EX")
+    {
+        if(i+1 >= args.size())
+        {
+            cout << Response::error("EX requires seconds") << endl;
+            return;
+        }
+
+        ttl = stoll(args[i + 1]);
+    }
+
+    store.set(key, value, ttl);
 
     cout << Response::ok() << endl;
 }
@@ -58,10 +73,10 @@ void DelCommand::execute(Store &store, const vector<string> &args)
 // HELP
 void HelpCommand::execute(Store& store, const vector<string> &args)
 {
-    cout << "Available commands:"                     << endl;
-    cout << "  SET  <key> <value>  - Store a value"   << endl;
-    cout << "  GET  <key>          - Retrieve value"  << endl;
-    cout << "  DEL  <key>          - Delete key"      << endl;
-    cout << "  HELP                - Show commands"   << endl;
-    cout << "  EXIT                - Quit program"    << endl;
+    cout << "Available commands:" << endl;
+    cout << "  SET  <key> <value> [EX seconds]  - Store value with optional expiry" << endl;
+    cout << "  GET  <key>                       - Retrieve value" << endl;
+    cout << "  DEL  <key>                       - Delete key" << endl;
+    cout << "  HELP                             - Show commands" << endl;
+    cout << "  EXIT                             - Quit program" << endl;
 }

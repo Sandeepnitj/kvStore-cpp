@@ -1,19 +1,49 @@
 #include "store.h"
+#include <chrono>
 
 using namespace std;
 
-void Store::set(const string &key, const string &value)
+long long getCurrentTime()
 {
-    db[key] = value;
+    return chrono::duration_cast<chrono::seconds>(
+        chrono::system_clock::now().time_since_epoch()
+    ).count();
 }
 
-string Store::get(const string &key)
+void Store::set(const string &key, const string &value, long long ttl)
 {
-    if(db.find(key) != db.end())
+    Entry entry;
+    entry.value = value;
+
+    if (ttl == -1)
     {
-        return db[key];
+        entry.expiryTime = -1;
     }
-    return "NULL";
+    else
+    {
+        entry.expiryTime = getCurrentTime() + ttl;
+    }
+
+    db[key] = entry;
+}
+
+std::string Store::get(const std::string &key)
+{
+    if (db.find(key) == db.end())
+    {
+        return "NULL";
+    }
+
+    Entry &entry = db[key];
+
+    // Check expiry
+    if (entry.expiryTime != -1 && getCurrentTime() > entry.expiryTime)
+    {
+        db.erase(key);
+        return "NULL";
+    }
+
+    return entry.value;
 }
 
 void Store:: del(const string &key)
