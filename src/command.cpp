@@ -79,4 +79,5 @@ void HelpCommand::execute(Store& store, const vector<string> &args)
     cout << "  DEL  <key>                       - Delete key" << endl;
     cout << "  HELP                             - Show commands" << endl;
     cout << "  EXIT                             - Quit program" << endl;
+    cout << "\n  Cache capacity: " << store.getCapacity() << " (LRU eviction)" << endl;
 }

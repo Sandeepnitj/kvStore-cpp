@@ -12,41 +12,74 @@ long long getCurrentTime()
 
 void Store::set(const string &key, const string &value, long long ttl)
 {
+    long long expiry = (ttl == -1) ? -1 : getCurrentTime() + ttl;
+
+    auto it = db.find(key);
+
+    // If key exists → update + move to front
+    if(it != db.end())
+    {
+        lruList.erase(it->second.lruIt);
+    }
+
+    // Insert at front (most recently used)
+    lruList.push_front(key);
+
     Entry entry;
     entry.value = value;
-
-    if (ttl == -1)
-    {
-        entry.expiryTime = -1;
-    }
-    else
-    {
-        entry.expiryTime = getCurrentTime() + ttl;
-    }
+    entry.expiryTime = expiry;
+    entry.lruIt = lruList.begin();
 
     db[key] = entry;
+
+    // Evict if over capacity
+    if(db.size() > capacity)
+    {
+        string lruKey = lruList.back();
+        lruList.pop_back();
+        db.erase(lruKey);
+    }
 }
 
 std::string Store::get(const std::string &key)
 {
-    if (db.find(key) == db.end())
+    auto it = db.find(key);
+
+    if (it == db.end())
     {
         return "NULL";
     }
 
-    Entry &entry = db[key];
+    Entry &entry = it->second;
 
-    // Check expiry
+    // Check TTL expiry
     if (entry.expiryTime != -1 && getCurrentTime() > entry.expiryTime)
     {
-        db.erase(key);
+        lruList.erase(entry.lruIt);
+        db.erase(it);
         return "NULL";
     }
+
+    // Move key to front (most recently used)
+    lruList.erase(entry.lruIt);
+    lruList.push_front(key);
+    entry.lruIt = lruList.begin();
 
     return entry.value;
 }
 
-void Store:: del(const string &key)
+void Store::del(const string &key)
 {
-    db.erase(key);
+    auto it = db.find(key);
+
+    if(it != db.end())
+    {
+        lruList.erase(it->second.lruIt);
+        db.erase(it);
+    }
+}
+
+size_t Store::getCapacity() const
+{
+    return capacity;
 }
