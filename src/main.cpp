@@ -2,10 +2,10 @@
 #include <memory>
 #include <unordered_map>
 
-#include "store.h"
-#include "parser.h"
-#include "command.h"
-#include "response.h"
+#include "../include/store.h"
+#include "../include/parser.h"
+#include "../include/command.h"
+#include "../include/response.h"
 
 using namespace std;
 

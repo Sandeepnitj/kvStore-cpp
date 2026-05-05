@@ -19,7 +19,7 @@ private:
     std::unordered_map<std::string, Entry> db;
     std::list<std::string> lruList;
 
-    std::string filename = "dump.txt";
+    std::string filename = "data/dump.txt";
 
     size_t capacity = 3;
 

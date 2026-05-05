@@ -1,5 +1,5 @@
-#include "command.h"
-#include "response.h"
+#include "../include/command.h"
+#include "../include/response.h"
 
 #include <iostream>
 
