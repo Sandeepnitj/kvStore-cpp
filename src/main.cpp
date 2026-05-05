@@ -14,6 +14,9 @@ int main()
     Store store;
     string line;
 
+    // Load from File
+    store.loadFromFile();
+
     // Command registry
     unordered_map<string, unique_ptr<Command>> commands;
 

@@ -39,6 +39,9 @@ void Store::set(const string &key, const string &value, long long ttl)
         lruList.pop_back();
         db.erase(lruKey);
     }
+
+    // Save to File
+    saveToFile();
 }
 
 std::string Store::get(const std::string &key)
@@ -77,6 +80,52 @@ void Store::del(const string &key)
         lruList.erase(it->second.lruIt);
         db.erase(it);
     }
+
+    // Save to File
+    saveToFile();
+}
+
+void Store::saveToFile()
+{
+    ofstream out(filename);
+
+    for(auto &pair : db)
+    {
+        const string &key = pair.first;
+        const Entry &entry = pair.second;
+
+        out << key << " " << entry.value << " " << entry.expiryTime << endl;
+    }
+
+    out.close();
+}
+
+void Store::loadFromFile()
+{
+    ifstream in(filename);
+
+    if(! in.is_open())
+    {
+        return;
+    }
+
+    string key, value;
+    long long expiry;
+
+    while( in >> key >> value >> expiry )
+    {
+        Entry entry;
+        entry.value = value;
+        entry.expiryTime = expiry;
+
+        // Insert into LRU
+        lruList.push_front(key);
+        entry.lruIt = lruList.begin();
+
+        db[key] = entry;
+    }
+
+    in.close();
 }
 
 size_t Store::getCapacity() const
