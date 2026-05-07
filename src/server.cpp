@@ -101,13 +101,17 @@ int main()
 
             if (commands.find(cmd) != commands.end())
             {
+                // Create memory stream
                 std::stringstream ss;
-                std::streambuf *old = std::cout.rdbuf(ss.rdbuf());
+
+                std::streambuf *old = std::cout.rdbuf(ss.rdbuf()); // Redirect cout → ss
 
                 commands[cmd]->execute(store, tokens);
 
+                // Restore terminal output.
                 std::cout.rdbuf(old);
 
+                // Get stored string.
                 response = ss.str();
             }
             else
