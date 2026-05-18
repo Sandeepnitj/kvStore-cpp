@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <memory>
 #include <sstream>
+#include <thread>
+#include <mutex>
 
 #include <iostream>
 #include <cstring>
@@ -12,6 +14,68 @@
 #include <netinet/in.h>
 
 #define PORT 8080
+
+std::mutex storeMutex;
+
+void handleClient(int client_socket, Store &store, std::unordered_map<std::string, std::unique_ptr<Command>> &commands)
+{
+    char buffer[1024] = {0};
+
+    int valread = read(client_socket, buffer, sizeof(buffer));
+
+    if (valread <= 0)
+    {
+        close(client_socket);
+        return;
+    }
+
+    std::string input(buffer);
+
+    // Remove newline
+    if (!input.empty())
+    {
+        input.erase(input.find_last_not_of("\n\r") + 1);
+    }
+
+    std::vector<std::string> tokens = Parser::parse(input);
+
+    std::string response;
+
+    if (!tokens.empty())
+    {
+        std::string cmd = tokens[0];
+
+        if (commands.find(cmd) != commands.end())
+        {
+            std::stringstream ss;
+
+            std::streambuf *old = std::cout.rdbuf(ss.rdbuf());
+
+            {
+                // Critical section
+                std::lock_guard<std::mutex> lock(storeMutex);
+
+                commands[cmd]->execute(store, tokens);
+            }
+
+            std::cout.rdbuf(old);
+
+            response = ss.str();
+        }
+        else
+        {
+            response = "ERR Invalid command\n";
+        }
+    }
+    else
+    {
+        response = "ERR Empty command\n";
+    }
+
+    send(client_socket, response.c_str(), response.size(), 0);
+
+    close(client_socket);
+}
 
 int main()
 {
@@ -75,59 +139,9 @@ int main()
 
         std::cout << "Client connected" << std::endl;
 
-        char buffer[1024] = {0};
-        int valread = read(new_socket, buffer, sizeof(buffer));
+        std::thread clientThread( handleClient, new_socket, std::ref(store), std::ref(commands));
 
-        if (valread <= 0)
-        {
-            close(new_socket);
-            continue;
-        }
-
-        std::string input(buffer);
-
-        // Remove newline
-        if (!input.empty())
-        {
-            input.erase(input.find_last_not_of("\n\r") + 1);
-        }
-
-        std::vector<std::string> tokens = Parser::parse(input);
-        std::string response;
-
-        if (!tokens.empty())
-        {
-            std::string cmd = tokens[0];
-
-            if (commands.find(cmd) != commands.end())
-            {
-                // Create memory stream
-                std::stringstream ss;
-
-                std::streambuf *old = std::cout.rdbuf(ss.rdbuf()); // Redirect cout → ss
-
-                commands[cmd]->execute(store, tokens);
-
-                // Restore terminal output.
-                std::cout.rdbuf(old);
-
-                // Get stored string.
-                response = ss.str();
-            }
-            else
-            {
-                response = "ERR Invalid command\n";
-            }
-        }
-        else
-        {
-            response = "ERR Empty command\n";
-        }
-
-        // Send response
-        send(new_socket, response.c_str(), response.size(), 0);
-
-        close(new_socket);
+        clientThread.detach();
     }
 
     return 0;

@@ -99,8 +99,8 @@ kvstore-cpp/
 ## Build & Run
 
 ```bash
-g++ -std=c++17 -Iinclude src/*.cpp -o kvstore
-./kvstore
+g++ -std=c++17 -pthread -Iinclude src/*.cpp -o kvStore
+./kvStore
 ```
 
 ---
