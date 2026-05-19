@@ -19,60 +19,70 @@ std::mutex storeMutex;
 
 void handleClient(int client_socket, Store &store, std::unordered_map<std::string, std::unique_ptr<Command>> &commands)
 {
-    char buffer[1024] = {0};
-
-    int valread = read(client_socket, buffer, sizeof(buffer));
-
-    if (valread <= 0)
+    while (true)
     {
-        close(client_socket);
-        return;
-    }
+        char buffer[1024] = {0};
 
-    std::string input(buffer);
+        int valread = read(client_socket, buffer, sizeof(buffer));
 
-    // Remove newline
-    if (!input.empty())
-    {
-        input.erase(input.find_last_not_of("\n\r") + 1);
-    }
-
-    std::vector<std::string> tokens = Parser::parse(input);
-
-    std::string response;
-
-    if (!tokens.empty())
-    {
-        std::string cmd = tokens[0];
-
-        if (commands.find(cmd) != commands.end())
+        if (valread <= 0)
         {
-            std::stringstream ss;
+            std::cout << "Client disconnected" << std::endl;
+            break;
+        }
 
-            std::streambuf *old = std::cout.rdbuf(ss.rdbuf());
+        std::string input(buffer);
 
+        // Remove newline
+        if (!input.empty())
+        {
+            input.erase(input.find_last_not_of("\n\r") + 1);
+        }
+
+        std::vector<std::string> tokens = Parser::parse(input);
+
+        std::string response;
+
+        if (!tokens.empty())
+        {
+            std::string cmd = tokens[0];
+
+            if (cmd == "EXIT")
             {
-                // Critical section
-                std::lock_guard<std::mutex> lock(storeMutex);
+                std::string goodbye = "Goodbye!\n";
 
-                commands[cmd]->execute(store, tokens);
+                send(client_socket, goodbye.c_str(), goodbye.size(), 0);
+
+                break;
             }
 
-            std::cout.rdbuf(old);
+            if (commands.find(cmd) != commands.end())
+            {
+                std::stringstream ss;
 
-            response = ss.str();
+                std::streambuf *old = std::cout.rdbuf(ss.rdbuf());
+
+                {
+                    std::lock_guard<std::mutex> lock(storeMutex);
+                    commands[cmd]->execute(store, tokens);
+                }
+
+                std::cout.rdbuf(old);
+
+                response = ss.str();
+            }
+            else
+            {
+                response = "ERR Invalid command\n";
+            }
         }
         else
         {
-            response = "ERR Invalid command\n";
+            response = "ERR Empty command\n";
         }
-    }
-    else
-    {
-        response = "ERR Empty command\n";
-    }
 
-    send(client_socket, response.c_str(), response.size(), 0);
+        send(client_socket, response.c_str(), response.size(), 0);
+    }
 
     close(client_socket);
 }
